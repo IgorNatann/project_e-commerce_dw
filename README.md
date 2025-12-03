@@ -290,8 +290,8 @@ Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 ## 👤 Autor
 
 **Seu Nome**
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- LinkedIn: [Seu Nome](https://linkedin.com/in/seu-perfil)
+- GitHub: [@IgorNatann](https://github.com/IgorNatann)
+- LinkedIn: [Igor Natan](https://www.linkedin.com/in/igor-natan/)
 
 ## 🙏 Agradecimentos
 
