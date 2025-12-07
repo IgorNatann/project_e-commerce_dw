@@ -292,11 +292,11 @@ CREATE TABLE dim.DIM_VENDEDOR
     
     -- Unique: CPF deve ser único (se informado)
     CONSTRAINT UK_DIM_VENDEDOR_cpf 
-        UNIQUE (cpf) WHERE cpf IS NOT NULL,
+        UNIQUE (cpf),
     
     -- Unique: Matrícula deve ser única (se informada)
     CONSTRAINT UK_DIM_VENDEDOR_matricula 
-        UNIQUE (matricula) WHERE matricula IS NOT NULL,
+        UNIQUE (matricula),
     
     -- Check: Meta não pode ser negativa
     CONSTRAINT CK_DIM_VENDEDOR_meta_positiva 
