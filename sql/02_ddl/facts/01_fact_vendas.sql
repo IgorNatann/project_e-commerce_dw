@@ -1,8 +1,8 @@
 -- ========================================
--- SCRIPT: 01_fact_vendas.sql
+-- SCRIPT: 07_fact_vendas.sql
 -- DESCRIÇÃO: Criação da FACT_VENDAS (Tabela Fato Principal)
 -- AUTOR: Data Warehouse E-commerce Project
--- DATA: 2025-12-08
+-- DATA: 2024-12-08
 -- PRÉ-REQUISITOS: Todas as dimensões criadas
 -- ========================================
 
@@ -450,10 +450,6 @@ DECLARE @vendedor_id INT;
 DECLARE @quantidade INT;
 DECLARE @preco DECIMAL(10,2);
 DECLARE @custo DECIMAL(10,2);
-DECLARE @valor_total_bruto DECIMAL(15,2);
-DECLARE @valor_total_descontos DECIMAL(15,2);
-DECLARE @valor_total_liquido DECIMAL(15,2);
-DECLARE @custo_total DECIMAL(15,2);
 DECLARE @desconto_pct DECIMAL(5,2);
 DECLARE @numero_ped VARCHAR(20);
 
@@ -478,9 +474,9 @@ BEGIN
     SELECT TOP 1 
         @produto_id = produto_id,
         @preco = preco_sugerido,
-        @custo = preco_custo
+        @custo = custo_medio
     FROM dim.DIM_PRODUTO 
-    WHERE situacao = 'Ativo'
+    WHERE eh_ativo = 1
     ORDER BY NEWID();
     
     -- Selecionar região aleatória
@@ -513,12 +509,6 @@ BEGIN
     -- Número do pedido
     SET @numero_ped = 'PED-2024-' + RIGHT('000000' + CAST(@i AS VARCHAR), 6);
     
-    -- Calcular valores já arredondados para evitar conflito com CHECK
-    SET @valor_total_bruto = ROUND(@quantidade * @preco, 2);
-    SET @valor_total_descontos = ROUND(@valor_total_bruto * (@desconto_pct / 100.0), 2);
-    SET @valor_total_liquido = @valor_total_bruto - @valor_total_descontos;
-    SET @custo_total = ROUND(@quantidade * @custo, 2);
-
     -- Inserir venda
     INSERT INTO fact.FACT_VENDAS (
         data_id, cliente_id, produto_id, regiao_id, vendedor_id,
@@ -539,15 +529,15 @@ BEGIN
         @data_id, @cliente_id, @produto_id, @regiao_id, @vendedor_id,
         @quantidade,
         @preco,
-        @valor_total_bruto, -- valor bruto (2 casas)
-        @valor_total_descontos, -- descontos (2 casas)
-        @valor_total_liquido, -- liquido coerente
-        @custo_total, -- custo (2 casas)
+        @quantidade * @preco, -- valor bruto
+        (@quantidade * @preco) * (@desconto_pct / 100), -- descontos
+        (@quantidade * @preco) - ((@quantidade * @preco) * (@desconto_pct / 100)), -- líquido
+        @quantidade * @custo, -- custo
         0, -- sem devolução inicial
         0,
         CASE WHEN @vendedor_id IS NOT NULL THEN 3.5 ELSE NULL END, -- 3.5% comissão
         CASE WHEN @vendedor_id IS NOT NULL 
-            THEN @valor_total_liquido * 0.035
+            THEN ((@quantidade * @preco) - ((@quantidade * @preco) * (@desconto_pct / 100))) * 0.035
             ELSE NULL 
         END,
         @numero_ped,
@@ -684,6 +674,243 @@ FROM fact.FACT_VENDAS
 GROUP BY teve_desconto;
 PRINT '';
 
+-- 7. Taxa de devolução
+PRINT '7. Análise de Devoluções:';
+SELECT 
+    COUNT(*) AS total_vendas,
+    SUM(CASE WHEN quantidade_devolvida > 0 THEN 1 ELSE 0 END) AS vendas_com_devolucao,
+    CAST(SUM(CASE WHEN quantidade_devolvida > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS DECIMAL(5,2)) AS taxa_devolucao_pct,
+    SUM(quantidade_devolvida) AS total_itens_devolvidos,
+    CAST(SUM(valor_devolvido) AS DECIMAL(15,2)) AS valor_total_devolvido
+FROM fact.FACT_VENDAS;
+PRINT '';
 
+-- 8. Análise por tipo de venda (com/sem vendedor)
+PRINT '8. Vendas: Diretas vs Vendedor:';
+SELECT 
+    CASE 
+        WHEN vendedor_id IS NULL THEN 'Venda Direta (E-commerce)'
+        ELSE 'Venda com Vendedor'
+    END AS tipo_venda,
+    COUNT(*) AS total_vendas,
+    CAST(AVG(valor_total_liquido) AS DECIMAL(10,2)) AS ticket_medio,
+    CAST(SUM(valor_total_liquido) AS DECIMAL(15,2)) AS receita_total
+FROM fact.FACT_VENDAS
+GROUP BY CASE WHEN vendedor_id IS NULL THEN 'Venda Direta (E-commerce)' ELSE 'Venda com Vendedor' END;
+PRINT '';
 
+-- ========================================
+-- 8. CRIAR VIEW ANALÍTICA
+-- ========================================
 
+PRINT '========================================';
+PRINT 'CRIANDO VIEW ANALÍTICA';
+PRINT '========================================';
+PRINT '';
+
+IF OBJECT_ID('fact.VW_VENDAS_COMPLETA', 'V') IS NOT NULL
+    DROP VIEW fact.VW_VENDAS_COMPLETA;
+GO
+
+CREATE VIEW fact.VW_VENDAS_COMPLETA
+AS
+/*
+╔════════════════════════════════════════════════════════════════════════╗
+║  View: VW_VENDAS_COMPLETA                                              ║
+║  Propósito: Facilitar queries analíticas com todos os JOINs feitos    ║
+║  Uso: SELECT * FROM fact.VW_VENDAS_COMPLETA WHERE ano = 2024          ║
+╚════════════════════════════════════════════════════════════════════════╝
+*/
+SELECT 
+    -- IDs
+    fv.venda_id,
+    fv.numero_pedido,
+    
+    -- Data
+    fv.data_id,
+    d.data_completa,
+    d.ano,
+    d.trimestre,
+    d.mes,
+    d.nome_mes,
+    d.dia_semana,
+    d.nome_dia_semana,
+    
+    -- Cliente
+    fv.cliente_id,
+    c.nome_cliente,
+    c.tipo_cliente,
+    c.segmento,
+    c.pais AS cliente_pais,
+    c.estado AS cliente_estado,
+    c.cidade AS cliente_cidade,
+    
+    -- Produto
+    fv.produto_id,
+    p.nome_produto,
+    p.codigo_sku,
+    p.categoria,
+    p.subcategoria,
+    p.marca,
+    p.nome_fornecedor,
+    
+    -- Região de Entrega
+    fv.regiao_id,
+    r.cidade AS regiao_entrega_cidade,
+    r.estado AS regiao_entrega_estado,
+    r.regiao_pais AS regiao_entrega_regional,
+    
+    -- Vendedor e Equipe
+    fv.vendedor_id,
+    v.nome_vendedor,
+    v.cargo AS vendedor_cargo,
+    v.equipe_id,
+    e.nome_equipe,
+    e.tipo_equipe,
+    e.regional AS equipe_regional,
+    
+    -- Métricas de Quantidade
+    fv.quantidade_vendida,
+    fv.quantidade_devolvida,
+    fv.quantidade_vendida - fv.quantidade_devolvida AS quantidade_liquida,
+    
+    -- Métricas Financeiras
+    fv.preco_unitario_tabela,
+    fv.valor_total_bruto,
+    fv.valor_total_descontos,
+    fv.valor_total_liquido,
+    fv.custo_total,
+    fv.valor_devolvido,
+    
+    -- Métricas Calculadas
+    fv.valor_total_liquido - fv.custo_total AS lucro_bruto,
+    CASE 
+        WHEN fv.valor_total_liquido > 0 
+        THEN ((fv.valor_total_liquido - fv.custo_total) / fv.valor_total_liquido) * 100
+        ELSE 0 
+    END AS margem_percentual,
+    
+    fv.valor_total_liquido / fv.quantidade_vendida AS preco_medio_unitario,
+    
+    -- Comissões
+    fv.percentual_comissao,
+    fv.valor_comissao,
+    
+    -- Flags
+    fv.teve_desconto,
+    CASE WHEN fv.quantidade_devolvida > 0 THEN 1 ELSE 0 END AS teve_devolucao,
+    CASE WHEN fv.vendedor_id IS NULL THEN 1 ELSE 0 END AS eh_venda_direta,
+    
+    -- Auditoria
+    fv.data_inclusao,
+    fv.data_atualizacao
+
+FROM fact.FACT_VENDAS fv
+INNER JOIN dim.DIM_DATA d ON fv.data_id = d.data_id
+INNER JOIN dim.DIM_CLIENTE c ON fv.cliente_id = c.cliente_id
+INNER JOIN dim.DIM_PRODUTO p ON fv.produto_id = p.produto_id
+INNER JOIN dim.DIM_REGIAO r ON fv.regiao_id = r.regiao_id
+LEFT JOIN dim.DIM_VENDEDOR v ON fv.vendedor_id = v.vendedor_id
+LEFT JOIN dim.DIM_EQUIPE e ON v.equipe_id = e.equipe_id;
+GO
+
+PRINT '✅ View fact.VW_VENDAS_COMPLETA criada!';
+PRINT '';
+
+-- ========================================
+-- 9. TESTAR A VIEW
+-- ========================================
+
+PRINT '========================================';
+PRINT 'TESTANDO VIEW ANALÍTICA';
+PRINT '========================================';
+PRINT '';
+
+PRINT '1. Sample de vendas completas:';
+SELECT TOP 5
+    numero_pedido,
+    data_completa,
+    nome_cliente,
+    nome_produto,
+    nome_vendedor,
+    CAST(valor_total_liquido AS DECIMAL(10,2)) AS valor,
+    CAST(margem_percentual AS DECIMAL(5,2)) AS margem_pct
+FROM fact.VW_VENDAS_COMPLETA
+ORDER BY venda_id DESC;
+PRINT '';
+
+PRINT '2. Análise de margem por categoria:';
+SELECT TOP 5
+    categoria,
+    COUNT(*) AS total_vendas,
+    CAST(AVG(margem_percentual) AS DECIMAL(5,2)) AS margem_media,
+    CAST(SUM(valor_total_liquido) AS DECIMAL(15,2)) AS receita_total
+FROM fact.VW_VENDAS_COMPLETA
+GROUP BY categoria
+ORDER BY receita_total DESC;
+PRINT '';
+
+-- ========================================
+-- 10. ESTATÍSTICAS FINAIS
+-- ========================================
+
+PRINT '========================================';
+PRINT 'ESTATÍSTICAS FINAIS';
+PRINT '========================================';
+PRINT '';
+
+SELECT 
+    '📊 RESUMO DA FACT_VENDAS' AS titulo,
+    (SELECT COUNT(*) FROM fact.FACT_VENDAS) AS total_vendas,
+    (SELECT COUNT(DISTINCT cliente_id) FROM fact.FACT_VENDAS) AS clientes_unicos,
+    (SELECT COUNT(DISTINCT produto_id) FROM fact.FACT_VENDAS) AS produtos_vendidos,
+    (SELECT COUNT(DISTINCT vendedor_id) FROM fact.FACT_VENDAS WHERE vendedor_id IS NOT NULL) AS vendedores_ativos,
+    (SELECT SUM(valor_total_liquido) FROM fact.FACT_VENDAS) AS receita_total,
+    (SELECT AVG(valor_total_liquido) FROM fact.FACT_VENDAS) AS ticket_medio;
+
+PRINT '';
+PRINT '✅✅✅ FACT_VENDAS CRIADA E VALIDADA COM SUCESSO! ✅✅✅';
+PRINT '';
+PRINT '========================================';
+PRINT 'RELACIONAMENTOS ESTABELECIDOS';
+PRINT '========================================';
+PRINT '';
+PRINT '✅ FACT_VENDAS → DIM_DATA (FK data_id)';
+PRINT '✅ FACT_VENDAS → DIM_CLIENTE (FK cliente_id)';
+PRINT '✅ FACT_VENDAS → DIM_PRODUTO (FK produto_id)';
+PRINT '✅ FACT_VENDAS → DIM_REGIAO (FK regiao_id)';
+PRINT '✅ FACT_VENDAS → DIM_VENDEDOR (FK vendedor_id)';
+PRINT '✅ FACT_VENDAS → DIM_EQUIPE (transitivo via DIM_VENDEDOR)';
+PRINT '';
+PRINT '========================================';
+PRINT 'MODELO STAR SCHEMA COMPLETO!';
+PRINT '========================================';
+PRINT '';
+PRINT '📊 DIMENSÕES CONECTADAS:';
+PRINT '   • DIM_DATA ✅';
+PRINT '   • DIM_CLIENTE ✅';
+PRINT '   • DIM_PRODUTO ✅';
+PRINT '   • DIM_REGIAO ✅';
+PRINT '   • DIM_VENDEDOR ✅';
+PRINT '   • DIM_EQUIPE ✅ (transitivo)';
+PRINT '';
+PRINT '========================================';
+PRINT 'PRÓXIMOS PASSOS';
+PRINT '========================================';
+PRINT '';
+PRINT '📌 Agora você pode:';
+PRINT '   1. Criar FACT_METAS (Exercício 1 - metas dos vendedores)';
+PRINT '   2. Criar DIM_DESCONTO (Exercício 2)';
+PRINT '   3. Criar FACT_DESCONTOS (Exercício 2)';
+PRINT '   4. Criar queries analíticas avançadas';
+PRINT '   5. Criar dashboards e relatórios';
+PRINT '';
+PRINT '🎯 QUERIES ÚTEIS:';
+PRINT '   • SELECT * FROM fact.VW_VENDAS_COMPLETA';
+PRINT '   • SELECT * FROM dim.VW_VENDEDORES_ATIVOS';
+PRINT '   • SELECT * FROM dim.VW_EQUIPES_ATIVAS';
+PRINT '';
+PRINT '========================================';
+PRINT 'PRÓXIMO SCRIPT: 08_fact_metas.sql';
+PRINT '========================================';
+GO
