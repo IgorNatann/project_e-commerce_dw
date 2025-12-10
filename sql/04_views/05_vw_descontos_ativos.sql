@@ -1,4 +1,4 @@
-PRINT '========================================';
+﻿PRINT '========================================';
 PRINT 'CRIANDO VIEW AUXILIAR';
 PRINT '========================================';
 PRINT '';
@@ -10,11 +10,9 @@ GO
 CREATE VIEW dim.VW_DESCONTOS_ATIVOS
 AS
 /*
-╔════════════════════════════════════════════════════════════════════════╗
-║  View: VW_DESCONTOS_ATIVOS                                             ║
-║  Propósito: Mostrar apenas descontos válidos e utilizáveis            ║
-║  Uso: SELECT * FROM dim.VW_DESCONTOS_ATIVOS                           ║
-╚════════════════════════════════════════════════════════════════════════╝
+    View: VW_DESCONTOS_ATIVOS
+    Proposito: Mostrar apenas descontos validos e utilizaveis
+    Uso: SELECT * FROM dim.VW_DESCONTOS_ATIVOS
 */
 SELECT 
     desconto_id,
@@ -38,8 +36,7 @@ SELECT
     data_fim_validade,
     CASE 
         WHEN data_fim_validade IS NULL THEN 'Sem Expiração'
-        WHEN data_fim_validade >= GETDATE() THEN 'Válido'
-        ELSE 'Expirado'
+        ELSE 'Válido'
     END AS status_validade,
     DATEDIFF(DAY, GETDATE(), data_fim_validade) AS dias_ate_expirar,
     -- Performance
@@ -51,7 +48,7 @@ SELECT
     canal_divulgacao,
     eh_cumulativo,
     requer_aprovacao,
-    -- Cálculos
+    -- Calculos
     CASE 
         WHEN total_usos_realizados > 0 
         THEN total_receita_gerada / total_usos_realizados
@@ -69,5 +66,5 @@ WHERE eh_ativo = 1
   AND (data_fim_validade IS NULL OR data_fim_validade >= GETDATE());
 GO
 
-PRINT '✅ View dim.VW_DESCONTOS_ATIVOS criada!';
+PRINT 'Ok. View dim.VW_DESCONTOS_ATIVOS criada!';
 PRINT '';
