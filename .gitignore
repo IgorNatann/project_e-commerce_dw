@@ -191,3 +191,6 @@ TODO_PESSOAL.md
 # ============ KEEP EMPTY FOLDERS ============
 # Usar .gitkeep para manter pastas vazias no git
 !**/.gitkeep
+
+
+.vscode
