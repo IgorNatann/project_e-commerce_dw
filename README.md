@@ -122,7 +122,7 @@ PROJECT_E-COMMERCE_DW/
 │   │   ├── 10_vw_ranking_equipes_meta.sql
 │   │   └── 11_vw_analise_regional_equipes.sql
 │   │
-│   ├── 📂 05_procedures/                 # Stored procedures (futuro)
+│   ├── 📂 05_procedures/                 # Stored procedures
 │   ├── 📂 06_queries/                    # Queries analíticas
 │   └── 📂 99_maintenance/                # Manutenção
 │
@@ -166,8 +166,8 @@ GO
 -- 2. Criação das Dimensões (DDL)
 USE DW_ECOMMERCE;
 GO
-:r sql/02_ddl/dimensions/02_dim_data.sql
-:r sql/02_ddl/dimensions/03_dim_cliente.sql
+:r sql/02_ddl/dimensions/01_dim_data.sql
+:r sql/02_ddl/dimensions/02_dim_cliente.sql
 :r sql/02_ddl/dimensions/03_dim_produto.sql
 :r sql/02_ddl/dimensions/04_dim_regiao.sql
 :r sql/02_ddl/dimensions/05_dim_equipe.sql
