@@ -175,9 +175,9 @@ GO
 :r sql/02_ddl/dimensions/07_dim_desconto.sql
 
 -- 3. Criação das Facts (DDL)
-:r sql/02_ddl/facts/07_fact_vendas.sql
-:r sql/02_ddl/facts/08_fact_metas.sql
-:r sql/02_ddl/facts/09_fact_descontos.sql
+:r sql/02_ddl/facts/01_fact_vendas.sql
+:r sql/02_ddl/facts/02_fact_metas.sql
+:r sql/02_ddl/facts/03_fact_descontos.sql
 
 -- 4. Views auxiliares
 :r sql/04_views/01_vw_calendario_completo.sql
