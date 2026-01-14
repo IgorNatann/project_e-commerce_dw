@@ -422,177 +422,448 @@ vendedor.gerente_id → vendedor.vendedor_id
 |-------|------|------|-----------|---------|--------|
 | 🔑 **desconto_id** | INT | ✓ | PK - Surrogate Key | `1` | PRIMARY KEY IDENTITY |
 | 🔗 **desconto_original_id** | INT | ✓ | Natural Key (Marketing) | `7890` | UNIQUE |
-| 📝 **codigo_desconto** | VARCHAR(50) | ✓ | Código do cupom | `BLACKFRIDAY2024` | UNIQUE |
-| 📝 **nome_campanha** | VARCHAR(150) | ✗ | Nome da campanha | `Black Friday 2024` | - |
-| 📝 **descricao** | VARCHAR(500) | ✗ | Descrição da promoção | `15% em toda loja` | - |
-| 📝 **tipo_desconto** | VARCHAR(30) | ✓ | Natureza do desconto | `Cupom` | `IN ('Cupom','Promoção Automática','Desconto Progressivo','Fidelidade','Primeira Compra','Cashback')` |
-| 📝 **metodo_desconto** | VARCHAR(30) | ✓ | Como é calculado | `Percentual` | `IN ('Percentual','Valor Fixo','Frete Grátis','Brinde','Combo')` |
-| 📊 **valor_desconto** | DECIMAL(10,2) | ✗ | Valor do desconto | `15.00` | `> 0` ou NULL |
-| 📊 **min_valor_compra_regra** | DECIMAL(15,2) | ✗ | Mínimo do pedido | `200.00` | - |
-| 📊 **max_valor_desconto_regra** | DECIMAL(15,2) | ✗ | Teto do desconto | `100.00` | - |
-| 📝 **max_usos_por_cliente** | INT | ✗ | Limite por cliente | `1` | - |
-| 📝 **max_usos_total** | INT | ✗ | Limite global | `1000` | - |
-| 📝 **aplica_em** | VARCHAR(30) | ✓ | Escopo do desconto | `Pedido Total` | `IN ('Pedido Total','Produto Específico','Categoria','Frete','Item Individual')` |
-| 📝 **restricao_produtos** | VARCHAR(500) | ✗ | Produtos/categorias elegíveis | `Eletrônicos,Informática` | - |
-| 📝 **restricao_clientes** | VARCHAR(500) | ✗ | Restrições de público | `Novos Clientes` | - |
-| 🗓️ **data_inicio_validade** | DATETIME | ✓ | Início da validade | `2024-11-25 00:00:00` | - |
-| 🗓️ **data_fim_validade** | DATETIME | ✗ | Fim da validade | `2024-11-29 23:59:59` | - |
-| 📝 **origem_campanha** | VARCHAR(50) | ✗ | Origem da campanha | `Marketing Digital` | - |
-| 📝 **canal_divulgacao** | VARCHAR(50) | ✗ | Canal de divulgação | `Instagram` | - |
-| 📊 **total_usos_realizados** | INT | ✓ | Total de usos | `250` | `>= 0` |
-| 📊 **total_receita_gerada** | DECIMAL(15,2) | ✓ | Receita gerada | `125000.00` | `>= 0` |
-| 📊 **total_desconto_concedido** | DECIMAL(15,2) | ✓ | Total concedido | `15000.00` | `>= 0` |
-| 📝 **situacao** | VARCHAR(20) | ✓ | Status do cupom | `Ativo` | `IN ('Ativo','Pausado','Expirado','Esgotado','Cancelado')` |
-| 🏷️ **eh_ativo** | BIT | ✓ | Flag de uso | `1` | 1=Ativo, 0=Inativo |
-| 🏷️ **requer_aprovacao** | BIT | ✓ | Requer aprovação | `0` | 1=Sim, 0=Não |
-| 🏷️ **eh_cumulativo** | BIT | ✓ | Pode acumular | `0` | 1=Sim, 0=Não |
-| 🗓️ **data_criacao** | DATETIME | ✓ | Data de criação | `2024-01-01 00:00:00` | - |
-| 🗓️ **data_ultima_atualizacao** | DATETIME | ✓ | Última atualização | `2024-12-15 10:30:00` | - |
-| 📝 **usuario_criador** | VARCHAR(100) | ✗ | Usuário criador | `maria.silva` | - |
-| 📝 **observacoes** | VARCHAR(500) | ✗ | Observações | `Campanha sazonal` | - |
+| 📝 **codigo_desconto** | VARCHAR(50) | ✓ | Código do cupom | `"BLACKFRIDAY"` | UNIQUE |
+| 📝 **nome_campanha** | VARCHAR(100) | ✓ | Nome da campanha | `"Black Friday 2024"` | - |
+| 📝 **tipo_desconto** | VARCHAR(30) | ✓ | Tipo de desconto | `"Percentual"` | `IN ('Percentual','Valor Fixo','Frete Grátis','Brinde')` |
+| 📝 **metodo_desconto** | VARCHAR(30) | ✓ | Método de aplicação | `"Cupom"` | `IN ('Cupom','Automático','Negociado','Volume')` |
+| 📊 **valor_desconto** | DECIMAL(10,2) | ✓ | Valor (R$ ou %) | `10.00` | `> 0`, interpretação depende do tipo |
+| 📊 **min_valor_compra_regra** | DECIMAL(10,2) | ✗ | Valor mínimo para aplicar | `100.00` | NULL = sem mínimo |
+| 📊 **max_valor_desconto_regra** | DECIMAL(10,2) | ✗ | Teto do desconto | `50.00` | NULL = sem teto |
+| 📝 **aplica_em** | VARCHAR(30) | ✓ | Nível de aplicação | `"Carrinho"` | `IN ('Produto','Categoria','Carrinho','Frete')` |
+| 🗓️ **data_inicio_validade** | DATE | ✓ | Início da vigência | `2024-11-25` | - |
+| 🗓️ **data_fim_validade** | DATE | ✗ | Fim da vigência | `2024-11-30` | NULL = sem expiração |
+| 📝 **situacao** | VARCHAR(20) | ✓ | Status | `"Ativo"` | `IN ('Ativo','Inativo','Expirado','Pausado')` |
 
-**Origem:** Sistema de campanhas/marketing
+**Origem:** Sistema de Marketing/Promoções
 
-**Observação:** o significado de `valor_desconto` depende do `metodo_desconto` (percentual, valor fixo, frete grátis, etc.).
+**Vigência:**
+```sql
+-- Cupom está vigente se:
+GETDATE() BETWEEN data_inicio_validade AND ISNULL(data_fim_validade, '9999-12-31')
+AND situacao = 'Ativo'
+```
 
 ---
 
-## 📦 Tabelas Fato
+## 📊 TABELAS FATO
 
-## FACT_VENDAS - Vendas (Transacional)
+## FACT_VENDAS - Fato Transacional
 
 **Schema:** `fact.FACT_VENDAS`  
+**Registros Estimados:** Milhões (cresce continuamente)  
+**Crescimento:** Alto (centenas/milhares por dia)  
+**Tipo:** Transaction Fact Table
+
+### Campos
+
+| Campo | Tipo | Obr. | Descrição | Exemplo | Regras |
+|-------|------|------|-----------|---------|--------|
+| 🔑 **venda_id** | BIGINT | ✓ | PK - Surrogate Key | `1` | PRIMARY KEY IDENTITY |
+| 🔗 **data_id** | INT | ✓ | FK → DIM_DATA | `20241215` | NOT NULL |
+| 🔗 **cliente_id** | INT | ✓ | FK → DIM_CLIENTE | `5` | NOT NULL |
+| 🔗 **produto_id** | INT | ✓ | FK → DIM_PRODUTO | `10` | NOT NULL |
+| 🔗 **regiao_id** | INT | ✓ | FK → DIM_REGIAO | `1` | NOT NULL |
+| 🔗 **vendedor_id** | INT | ✗ | FK → DIM_VENDEDOR | `3` | NULL = venda direta |
+| 📊 **quantidade_vendida** | INT | ✓ | Unidades vendidas | `2` | `> 0` |
+| 📊 **preco_unitario_tabela** | DECIMAL(10,2) | ✓ | Preço de tabela | `3500.00` | `> 0` |
+| 📊 **valor_total_bruto** | DECIMAL(15,2) | ✓ | Valor antes de descontos | `7000.00` | `>= 0` |
+| 📊 **valor_total_descontos** | DECIMAL(15,2) | ✓ | Total de descontos | `700.00` | `>= 0` |
+| 📊 **valor_total_liquido** | DECIMAL(15,2) | ✓ | Valor pago pelo cliente | `6300.00` | `>= 0` |
+| 📊 **custo_total** | DECIMAL(15,2) | ✓ | Custo dos produtos | `4000.00` | `>= 0` |
+| 📊 **quantidade_devolvida** | INT | ✓ | Unidades devolvidas | `0` | `>= 0`, `<= quantidade_vendida` |
+| 📊 **valor_devolvido** | DECIMAL(15,2) | ✓ | Valor reembolsado | `0.00` | `>= 0` |
+| 📊 **percentual_comissao** | DECIMAL(5,2) | ✗ | % comissão vendedor | `3.50` | `BETWEEN 0 AND 100` |
+| 📊 **valor_comissao** | DECIMAL(15,2) | ✗ | Valor da comissão | `220.50` | `>= 0` |
+| 📝 **numero_pedido** | VARCHAR(20) | ✓ | Número do pedido (DD) | `"PED-2024-123456"` | Degenerate Dimension |
+| 🏷️ **teve_desconto** | BIT | ✓ | Flag de desconto | `1` | 0=Não, 1=Sim |
+| 🗓️ **data_inclusao** | DATETIME | ✓ | Quando foi inserido | `2024-12-15 10:30:00` | Default: GETDATE() |
+| 🗓️ **data_atualizacao** | DATETIME | ✓ | Última atualização | `2024-12-15 10:30:00` | Default: GETDATE() |
+
 **Granularidade:** 1 item vendido em 1 pedido
 
-### Campos
+**Constraints Críticos:**
+```sql
+-- Valor líquido = bruto - descontos
+CHECK (valor_total_liquido = valor_total_bruto - valor_total_descontos)
 
-| Campo | Tipo | Obr. | Descrição | Exemplo | Regras |
-|-------|------|------|-----------|---------|--------|
-| 🔑 **venda_id** | BIGINT | ✓ | PK da venda (surrogate) | `1` | PRIMARY KEY IDENTITY |
-| 🔗 **data_id** | INT | ✓ | FK -> DIM_DATA | `1826` | - |
-| 🔗 **cliente_id** | INT | ✓ | FK -> DIM_CLIENTE | `123` | - |
-| 🔗 **produto_id** | INT | ✓ | FK -> DIM_PRODUTO | `456` | - |
-| 🔗 **regiao_id** | INT | ✓ | FK -> DIM_REGIAO | `789` | - |
-| 🔗 **vendedor_id** | INT | ✗ | FK -> DIM_VENDEDOR | `12` | NULL = venda direta |
-| 📊 **quantidade_vendida** | INT | ✓ | Quantidade vendida | `2` | `> 0` |
-| 📊 **preco_unitario_tabela** | DECIMAL(10,2) | ✓ | Preço unitário sem desconto | `3500.00` | `>= 0` |
-| 📊 **valor_total_bruto** | DECIMAL(15,2) | ✓ | Valor antes de desconto | `7000.00` | `>= 0` |
-| 📊 **valor_total_descontos** | DECIMAL(15,2) | ✓ | Total de descontos | `700.00` | `>= 0` |
-| 📊 **valor_total_liquido** | DECIMAL(15,2) | ✓ | Valor final pago | `6300.00` | `= bruto - descontos` |
-| 📊 **custo_total** | DECIMAL(15,2) | ✓ | Custo total | `4000.00` | `>= 0` |
-| 📊 **quantidade_devolvida** | INT | ✓ | Quantidade devolvida | `1` | `>= 0` e `<= quantidade_vendida` |
-| 📊 **valor_devolvido** | DECIMAL(15,2) | ✓ | Valor devolvido | `3150.00` | `>= 0` |
-| 📊 **percentual_comissao** | DECIMAL(5,2) | ✗ | % de comissão | `3.50` | `BETWEEN 0 AND 100` |
-| 📊 **valor_comissao** | DECIMAL(15,2) | ✗ | Valor da comissão | `220.50` | - |
-| 📝 **numero_pedido** | VARCHAR(20) | ✓ | Número do pedido | `PED-2024-123456` | - |
-| 🏷️ **teve_desconto** | BIT | ✓ | Indicador de desconto | `1` | 1=Sim, 0=Não |
-| 🗓️ **data_inclusao** | DATETIME | ✓ | Data de inclusão no DW | `2024-12-31 10:00:00` | - |
-| 🗓️ **data_atualizacao** | DATETIME | ✓ | Última atualização | `2024-12-31 10:00:00` | - |
+-- Quantidade devolvida <= vendida
+CHECK (quantidade_devolvida <= quantidade_vendida)
+```
 
-**Origem:** Sistema de vendas + cálculos ETL
+**Métricas Calculadas (em queries):**
+```sql
+-- Margem
+(valor_total_liquido - custo_total) AS lucro_bruto
+(valor_total_liquido - custo_total) / valor_total_liquido * 100 AS margem_percentual
+
+-- Ticket médio
+AVG(valor_total_liquido) AS ticket_medio
+```
 
 ---
 
-## FACT_METAS - Metas (Snapshot Periódico)
+## FACT_METAS - Snapshot Periódico
 
 **Schema:** `fact.FACT_METAS`  
-**Granularidade:** 1 meta por vendedor por período
+**Registros Estimados:** Milhares (controlado)  
+**Crescimento:** Baixo (número vendedores × períodos)  
+**Tipo:** Periodic Snapshot Fact Table
 
 ### Campos
 
 | Campo | Tipo | Obr. | Descrição | Exemplo | Regras |
 |-------|------|------|-----------|---------|--------|
-| 🔑 **meta_id** | BIGINT | ✓ | PK da meta (surrogate) | `1` | PRIMARY KEY IDENTITY |
-| 🔗 **vendedor_id** | INT | ✓ | FK -> DIM_VENDEDOR | `12` | - |
-| 🔗 **data_id** | INT | ✓ | FK -> DIM_DATA (1º dia do período) | `1826` | - |
+| 🔑 **meta_id** | BIGINT | ✓ | PK - Surrogate Key | `1` | PRIMARY KEY IDENTITY |
+| 🔗 **vendedor_id** | INT | ✓ | FK → DIM_VENDEDOR | `3` | NOT NULL |
+| 🔗 **data_id** | INT | ✓ | FK → DIM_DATA | `20241201` | NOT NULL (1º dia do mês) |
 | 📊 **valor_meta** | DECIMAL(15,2) | ✓ | Meta em R$ | `50000.00` | `> 0` |
-| 📊 **quantidade_meta** | INT | ✗ | Meta de quantidade | `20` | - |
-| 📊 **valor_realizado** | DECIMAL(15,2) | ✓ | Valor realizado | `52500.00` | `>= 0` |
-| 📊 **quantidade_realizada** | INT | ✓ | Quantidade realizada | `22` | `>= 0` |
-| 📊 **percentual_atingido** | DECIMAL(5,2) | ✓ | % da meta atingida | `105.00` | `>= 0` |
-| 📊 **gap_meta** | DECIMAL(15,2) | ✓ | Diferença meta x realizado | `2500.00` | - |
-| 📊 **ticket_medio_realizado** | DECIMAL(10,2) | ✗ | Ticket médio | `2386.36` | - |
-| 📝 **ranking_periodo** | INT | ✗ | Ranking no período | `1` | 1=melhor |
-| 📝 **quartil_performance** | VARCHAR(10) | ✗ | Quartil de performance | `Q1` | `IN ('Q1','Q2','Q3','Q4')` |
-| 🏷️ **meta_batida** | BIT | ✓ | Meta atingida | `1` | `percentual_atingido >= 100` |
-| 🏷️ **meta_superada** | BIT | ✓ | Meta superada | `1` | `percentual_atingido > 100` |
-| 🏷️ **eh_periodo_fechado** | BIT | ✓ | Período fechado | `1` | 1=Sim, 0=Não |
-| 📝 **tipo_periodo** | VARCHAR(20) | ✓ | Tipo do período | `Mensal` | `IN ('Mensal','Trimestral','Anual')` |
-| 📝 **observacoes** | VARCHAR(500) | ✗ | Observações | `Meta ajustada` | - |
-| 🗓️ **data_inclusao** | DATETIME | ✓ | Data de inclusão | `2024-12-01 00:00:00` | - |
-| 🗓️ **data_ultima_atualizacao** | DATETIME | ✓ | Última atualização | `2024-12-31 23:59:59` | - |
+| 📊 **quantidade_meta** | INT | ✗ | Meta em quantidade | `20` | `> 0` |
+| 📊 **valor_realizado** | DECIMAL(15,2) | ✓ | Vendas reais | `52500.00` | `>= 0` |
+| 📊 **quantidade_realizada** | INT | ✓ | Vendas reais (qtd) | `22` | `>= 0` |
+| 📊 **percentual_atingido** | DECIMAL(5,2) | ✓ | % da meta | `105.00` | `>= 0` |
+| 📊 **gap_meta** | DECIMAL(15,2) | ✓ | Diferença | `2500.00` | Pode ser negativo |
+| 📊 **ticket_medio_realizado** | DECIMAL(10,2) | ✗ | Ticket médio | `2386.36` | Calculado |
+| 📊 **ranking_periodo** | INT | ✗ | Posição no ranking | `3` | 1 = melhor |
+| 📝 **quartil_performance** | VARCHAR(10) | ✗ | Quartil | `"Q1"` | `IN ('Q1','Q2','Q3','Q4')` |
+| 🏷️ **meta_batida** | BIT | ✓ | Atingiu meta? | `1` | 0=Não, 1=Sim |
+| 🏷️ **meta_superada** | BIT | ✓ | Superou meta? | `1` | 0=Não, 1=Sim (>100%) |
+| 🏷️ **eh_periodo_fechado** | BIT | ✓ | Período encerrado? | `1` | 0=Em andamento, 1=Fechado |
+| 📝 **tipo_periodo** | VARCHAR(20) | ✓ | Tipo | `"Mensal"` | `IN ('Mensal','Trimestral','Anual')` |
+| 📝 **observacoes** | VARCHAR(500) | ✗ | Notas | `"Meta ajustada devido férias"` | - |
+| 🗓️ **data_inclusao** | DATETIME | ✓ | Quando criado | `2024-12-01 00:00:00` | Default: GETDATE() |
+| 🗓️ **data_ultima_atualizacao** | DATETIME | ✓ | Última atualização | `2024-12-31 23:59:59` | Atualizado no ETL |
 
-**Origem:** Metas do RH/CRM + cálculo do realizado via FACT_VENDAS
+**Granularidade:** 1 meta de 1 vendedor em 1 período
+
+**Unique Constraint:**
+```sql
+UNIQUE (vendedor_id, data_id, tipo_periodo)
+-- Garante: vendedor não pode ter 2 metas no mesmo período
+```
+
+**Constraint de Coerência:**
+```sql
+CHECK (
+    (meta_batida = 0 AND percentual_atingido < 100) OR
+    (meta_batida = 1 AND percentual_atingido >= 100)
+)
+```
 
 ---
 
-## FACT_DESCONTOS - Descontos Aplicados (Eventos)
+## FACT_DESCONTOS - Fato Transacional
 
 **Schema:** `fact.FACT_DESCONTOS`  
-**Granularidade:** 1 desconto aplicado por venda/item
+**Registros Estimados:** Variável (depende de campanhas)  
+**Crescimento:** Médio (múltiplos descontos por venda)  
+**Tipo:** Transaction Fact Table
 
 ### Campos
 
 | Campo | Tipo | Obr. | Descrição | Exemplo | Regras |
 |-------|------|------|-----------|---------|--------|
-| 🔑 **desconto_aplicado_id** | BIGINT | ✓ | PK da aplicação | `1` | PRIMARY KEY IDENTITY |
-| 🔗 **desconto_id** | INT | ✓ | FK -> DIM_DESCONTO | `12` | - |
-| 🔗 **venda_id** | BIGINT | ✓ | FK -> FACT_VENDAS | `1450` | Fact-to-Fact |
-| 🔗 **data_aplicacao_id** | INT | ✓ | FK -> DIM_DATA | `1826` | - |
-| 🔗 **cliente_id** | INT | ✓ | FK -> DIM_CLIENTE | `123` | - |
-| 🔗 **produto_id** | INT | ✗ | FK -> DIM_PRODUTO | `456` | NULL = pedido/frete |
-| 📝 **nivel_aplicacao** | VARCHAR(30) | ✓ | Nível do desconto | `Item` | `IN ('Item','Pedido','Frete','Categoria')` |
-| 📊 **valor_desconto_aplicado** | DECIMAL(15,2) | ✓ | Valor concedido | `300.00` | `>= 0` |
-| 📊 **valor_sem_desconto** | DECIMAL(15,2) | ✓ | Valor antes do desconto | `3000.00` | `>= 0` |
-| 📊 **valor_com_desconto** | DECIMAL(15,2) | ✓ | Valor final | `2700.00` | `= sem_desconto - desconto` |
-| 📊 **margem_antes_desconto** | DECIMAL(15,2) | ✗ | Margem antes | `900.00` | - |
-| 📊 **margem_apos_desconto** | DECIMAL(15,2) | ✗ | Margem após | `600.00` | - |
-| 📊 **impacto_margem** | DECIMAL(15,2) | ✗ | Impacto na margem | `300.00` | - |
-| 📊 **percentual_desconto_efetivo** | DECIMAL(5,2) | ✓ | % efetivo | `10.00` | `BETWEEN 0 AND 100` |
-| 🏷️ **desconto_aprovado** | BIT | ✓ | Aprovado | `1` | 1=Sim, 0=Não |
-| 📝 **motivo_rejeicao** | VARCHAR(200) | ✗ | Motivo de rejeição | `Limite excedido` | - |
-| 📝 **numero_pedido** | VARCHAR(20) | ✓ | Número do pedido | `PED-2024-123456` | - |
-| 🗓️ **data_inclusao** | DATETIME | ✓ | Data de inclusão | `2024-11-25 10:00:00` | - |
-| 🗓️ **data_atualizacao** | DATETIME | ✓ | Última atualização | `2024-11-25 10:00:00` | - |
+| 🔑 **desconto_aplicado_id** | BIGINT | ✓ | PK - Surrogate Key | `1` | PRIMARY KEY IDENTITY |
+| 🔗 **desconto_id** | INT | ✓ | FK → DIM_DESCONTO | `10` | NOT NULL |
+| 🔗 **venda_id** | BIGINT | ✓ | FK → FACT_VENDAS | `123` | NOT NULL |
+| 🔗 **data_aplicacao_id** | INT | ✓ | FK → DIM_DATA | `20241215` | NOT NULL |
+| 🔗 **cliente_id** | INT | ✓ | FK → DIM_CLIENTE | `5` | NOT NULL (desnorm.) |
+| 🔗 **produto_id** | INT | ✗ | FK → DIM_PRODUTO | `10` | NULL se desconto no pedido |
+| 📝 **nivel_aplicacao** | VARCHAR(20) | ✓ | Nível | `"Produto"` | `IN ('Produto','Pedido','Frete')` |
+| 📊 **valor_desconto_aplicado** | DECIMAL(10,2) | ✓ | Valor do desconto | `350.00` | `>= 0` |
+| 📊 **valor_sem_desconto** | DECIMAL(10,2) | ✓ | Valor original | `3500.00` | `>= 0` |
+| 📊 **valor_com_desconto** | DECIMAL(10,2) | ✓ | Valor final | `3150.00` | `>= 0` |
+| 📊 **margem_antes_desconto** | DECIMAL(10,2) | ✓ | Margem original | `1500.00` | Pode ser negativo |
+| 📊 **margem_apos_desconto** | DECIMAL(10,2) | ✓ | Margem final | `1150.00` | Pode ser negativo |
+| 📊 **impacto_margem** | DECIMAL(10,2) | ✓ | Redução | `-350.00` | Negativo = perda |
+| 📝 **numero_pedido** | VARCHAR(20) | ✓ | Número do pedido (DD) | `"PED-2024-123456"` | Degenerate Dimension |
+| 🏷️ **desconto_aprovado** | BIT | ✓ | Foi aprovado? | `1` | 0=Não, 1=Sim |
+| 🗓️ **data_inclusao** | DATETIME | ✓ | Quando registrado | `2024-12-15 10:30:00` | Default: GETDATE() |
 
-**Origem:** Aplicação de cupons/promos + cálculo de impacto
+**Granularidade:** 1 desconto aplicado em 1 venda
+
+**Relacionamento Fact-to-Fact:**
+```sql
+-- Um pedido pode ter múltiplos descontos
+-- Exemplo: cupom + volume + frete grátis
+```
+
+**Constraints:**
+```sql
+-- Valor com desconto = sem desconto - desconto aplicado
+CHECK (valor_com_desconto = valor_sem_desconto - valor_desconto_aplicado)
+```
 
 ---
 
-## 🔍 Views Auxiliares
+## 🔍 VIEWS AUXILIARES
 
-Views para consumo e análise. Para detalhes de colunas e regras, consulte `sql/04_views/README.md`.
+### Views Dimensionais
 
-| View | Propósito | Origem principal |
-|------|-----------|------------------|
-| `dim.VW_CALENDARIO_COMPLETO` | Calendário completo com períodos e flags | `dim.DIM_DATA` |
-| `dim.VW_PRODUTOS_ATIVOS` | Produtos ativos para análise | `dim.DIM_PRODUTO` |
-| `dim.VW_CATALOGO_PRODUTOS` | Catálogo com faixa de preço e selo | `dim.DIM_PRODUTO` |
-| `dim.VW_CLIENTES_ATIVOS` | Clientes ativos e recência | `dim.DIM_CLIENTE` |
-| `dim.VW_HIERARQUIA_GEOGRAFICA` | Hierarquia geográfica | `dim.DIM_REGIAO` |
-| `dim.VW_VENDEDORES_ATIVOS` | Vendedores ativos + equipe | `dim.DIM_VENDEDOR`, `dim.DIM_EQUIPE` |
-| `dim.VW_HIERARQUIA_VENDEDORES` | Hierarquia gerencial | `dim.DIM_VENDEDOR` |
-| `dim.VW_ANALISE_EQUIPE_VENDEDORES` | Indicadores por equipe | `dim.DIM_EQUIPE`, `dim.DIM_VENDEDOR` |
-| `dim.VW_EQUIPES_ATIVAS` | Equipes ativas | `dim.DIM_EQUIPE` |
-| `dim.VW_RANKING_EQUIPES_META` | Ranking de equipes por meta | `fact.FACT_METAS`, dimensões |
-| `dim.VW_ANALISE_REGIONAL_EQUIPES` | Análise regional de equipes | dimensões + fatos |
-| `dim.VW_DESCONTOS_ATIVOS` | Cupons/descontos válidos | `dim.DIM_DESCONTO` |
-| `fact.VW_VENDAS_COMPLETA` | Vendas com joins de dimensões | `fact.FACT_VENDAS` + dims |
-| `fact.VW_METAS_COMPLETA` | Metas com contexto | `fact.FACT_METAS` + dims |
-| `fact.VW_DESCONTOS_COMPLETA` | Descontos aplicados com contexto | `fact.FACT_DESCONTOS` + dims |
+| View | Descrição | Base |
+|------|-----------|------|
+| **VW_CALENDARIO_COMPLETO** | Calendário + campos calculados | DIM_DATA |
+| **VW_PRODUTOS_ATIVOS** | Produtos ativos + margem | DIM_PRODUTO |
+| **VW_HIERARQUIA_GEOGRAFICA** | Hierarquia geográfica | DIM_REGIAO |
+| **VW_DESCONTOS_ATIVOS** | Descontos vigentes | DIM_DESCONTO |
+| **VW_VENDEDORES_ATIVOS** | Vendedores + tempo casa | DIM_VENDEDOR |
+| **VW_HIERARQUIA_VENDEDORES** | Hierarquia gerencial | DIM_VENDEDOR (self-join) |
+
+### Views de Equipes
+
+| View | Descrição | Base |
+|------|-----------|------|
+| **VW_ANALISE_EQUIPE_VENDEDORES** | Análise de composição | DIM_EQUIPE + DIM_VENDEDOR |
+| **VW_EQUIPES_ATIVAS** | Equipes operacionais | DIM_EQUIPE |
+| **VW_RANKING_EQUIPES_META** | Ranking por meta | DIM_EQUIPE |
+| **VW_ANALISE_REGIONAL_EQUIPES** | Agregação regional | DIM_EQUIPE |
+
+### Views Mestres
+
+| View | Descrição | Base |
+|------|-----------|------|
+| **VW_VENDAS_COMPLETA** | Vendas + todas dimensões | FACT_VENDAS + JOINs |
+| **VW_METAS_COMPLETA** | Metas + contexto completo | FACT_METAS + JOINs |
+
+**Documentação completa:** Ver `sql/04_views/README.md`
 
 ---
 
 ## 📚 Glossário de Termos
 
-- **Dimensão:** tabela descritiva com atributos de contexto (quem, onde, quando, etc.).
-- **Fato:** tabela com métricas numéricas do negócio (vendas, metas, descontos).
-- **Grão (Granularidade):** nível de detalhe de cada linha na tabela fato.
-- **Star Schema:** modelo em estrela com fatos no centro e dimensões ao redor.
-- **Chave Natural:** identificador vindo do sistema de origem (ex: cliente_original_id).
-- **Chave Surrogada:** identificador interno do DW (IDENTITY) sem significado de negócio.
-- **SCD Type 1:** sobrescreve atributos quando há mudança (sem histórico).
-- **Periodic Snapshot Fact:** fato periódico com estado por período (ex: metas mensais).
-- **Transaction Fact:** fato transacional linha-a-linha (ex: itens de venda).
-- **Degenerate Dimension:** atributo textual mantido na fact (ex: numero_pedido).
-- **Fact-to-Fact:** relacionamento entre tabelas fato (ex: FACT_DESCONTOS -> FACT_VENDAS).
+### Termos de Modelagem Dimensional
+
+| Termo | Definição |
+|-------|-----------|
+| **Star Schema** | Modelo com fact no centro e dimensions ao redor (estrela) |
+| **Snowflake Schema** | Star schema com dimensões normalizadas |
+| **Surrogate Key** | Chave artificial (1,2,3...) gerada pelo DW |
+| **Natural Key** | Chave do sistema fonte (codigo_sku, cpf) |
+| **Granularidade** | Nível de detalhe: o que é 1 linha da fact? |
+| **SCD Type 1** | Sobrescreve: valor antigo perdido |
+| **SCD Type 2** | Novo registro: histórico completo mantido |
+| **Degenerate Dimension (DD)** | Atributo descritivo que fica na fact (numero_pedido) |
+| **Conformed Dimension** | Dimensão compartilhada entre múltiplas facts |
+
+### Tipos de Métricas
+
+| Termo | Definição |
+|-------|-----------|
+| **Additive Measure** | Métrica somável em todas dimensões (quantidade) |
+| **Semi-Additive** | Somável em algumas dimensões (saldo_conta) |
+| **Non-Additive** | Não somável, deve ser calculada (percentual) |
+
+### Operações Analíticas
+
+| Termo | Definição |
+|-------|-----------|
+| **Drill-Down** | Detalhar: ano → trimestre → mês |
+| **Roll-Up** | Agregar: dia → mês → ano |
+| **Slice** | Filtrar uma dimensão: "apenas 2024" |
+| **Dice** | Filtrar múltiplas dimensões: "2024 + SP + Eletrônicos" |
+
+### Tipos de Facts
+
+| Termo | Definição |
+|-------|-----------|
+| **Transaction Fact** | Cada linha = evento individual (FACT_VENDAS) |
+| **Periodic Snapshot** | Foto periódica do estado (FACT_METAS) |
+| **Accumulating Snapshot** | Processo com múltiplas etapas (não implementado) |
+
+---
+
+## 📊 Resumo Estatístico
+
+### Contagem de Campos por Tabela
+
+| Tabela | Total Campos | PKs | FKs | Métricas | Descritivos | Flags | Temporais |
+|--------|--------------|-----|-----|----------|-------------|-------|-----------|
+| DIM_DATA | 13 | 1 | 0 | 0 | 10 | 2 | 0 |
+| DIM_CLIENTE | 12 | 1 | 1 | 0 | 7 | 1 | 2 |
+| DIM_PRODUTO | 14 | 1 | 2 | 3 | 7 | 1 | 0 |
+| DIM_REGIAO | 21 | 1 | 1 | 5 | 11 | 1 | 2 |
+| DIM_EQUIPE | 22 | 1 | 1 | 9 | 8 | 1 | 3 |
+| DIM_VENDEDOR | 38 | 1 | 3 | 7 | 19 | 3 | 5 |
+| DIM_DESCONTO | 12 | 1 | 1 | 3 | 5 | 0 | 2 |
+| FACT_VENDAS | 18 | 1 | 5 | 9 | 1 | 1 | 2 |
+| FACT_METAS | 19 | 1 | 2 | 9 | 2 | 3 | 2 |
+| FACT_DESCONTOS | 16 | 1 | 5 | 6 | 2 | 1 | 1 |
+| **TOTAL** | **185** | **10** | **21** | **51** | **72** | **14** | **19** |
+
+### Tipos de Dados Mais Usados
+
+| Tipo | Frequência | Uso Principal |
+|------|------------|---------------|
+| VARCHAR | 42% | Textos descritivos |
+| DECIMAL | 18% | Valores monetários e percentuais |
+| INT | 15% | IDs e contadores |
+| BIT | 8% | Flags booleanas |
+| DATE/DATETIME | 10% | Campos temporais |
+| BIGINT | 2% | PKs de facts |
+| CHAR | 5% | Códigos fixos (UF, DDD) |
+
+---
+
+## 🔍 Índice Alfabético de Campos
+
+<details>
+<summary>Clique para expandir lista completa (185 campos)</summary>
+
+| Campo | Tabelas |
+|-------|---------|
+| aceita_novos_clientes | DIM_VENDEDOR |
+| ano | DIM_DATA |
+| aplica_em | DIM_DESCONTO |
+| area | DIM_VENDEDOR |
+| area_km2 | DIM_REGIAO |
+| cargo | DIM_VENDEDOR |
+| categoria | DIM_PRODUTO |
+| categoria_equipe | DIM_EQUIPE |
+| cep_final | DIM_REGIAO |
+| cep_inicial | DIM_REGIAO |
+| cidade | DIM_CLIENTE, DIM_REGIAO |
+| cidade_atuacao | DIM_VENDEDOR |
+| cidade_sede | DIM_EQUIPE |
+| cliente_id | DIM_CLIENTE (PK), FACT_VENDAS, FACT_DESCONTOS |
+| cliente_original_id | DIM_CLIENTE |
+| codigo_desconto | DIM_DESCONTO |
+| codigo_equipe | DIM_EQUIPE |
+| codigo_ibge | DIM_REGIAO |
+| codigo_sku | DIM_PRODUTO |
+| cpf | DIM_VENDEDOR |
+| custo_medio | DIM_PRODUTO |
+| custo_total | FACT_VENDAS |
+| data_aplicacao_id | FACT_DESCONTOS |
+| data_atualizacao | FACT_VENDAS |
+| data_cadastro | DIM_CLIENTE, DIM_REGIAO |
+| data_completa | DIM_DATA |
+| data_contratacao | DIM_VENDEDOR |
+| data_criacao | DIM_EQUIPE |
+| data_desligamento | DIM_VENDEDOR |
+| data_fim_validade | DIM_DESCONTO |
+| data_id | DIM_DATA (PK), FACT_VENDAS, FACT_METAS |
+| data_inativacao | DIM_EQUIPE |
+| data_inclusao | FACT_VENDAS, FACT_METAS, FACT_DESCONTOS |
+| data_inicio_validade | DIM_DESCONTO |
+| data_primeira_venda | DIM_VENDEDOR |
+| data_ultima_atualizacao | DIM_REGIAO, DIM_EQUIPE, DIM_VENDEDOR, FACT_METAS |
+| data_ultima_compra | DIM_CLIENTE |
+| data_ultima_venda | DIM_VENDEDOR |
+| ddd | DIM_REGIAO |
+| densidade_demografica | DIM_REGIAO |
+| departamento | DIM_VENDEDOR |
+| desconto_aprovado | FACT_DESCONTOS |
+| desconto_aplicado_id | FACT_DESCONTOS (PK) |
+| desconto_id | DIM_DESCONTO (PK), FACT_DESCONTOS |
+| desconto_original_id | DIM_DESCONTO |
+| dia_ano | DIM_DATA |
+| dia_mes | DIM_DATA |
+| dia_semana | DIM_DATA |
+| dimensoes | DIM_PRODUTO |
+| eh_ativo | DIM_CLIENTE, DIM_PRODUTO, DIM_REGIAO, DIM_EQUIPE, DIM_VENDEDOR |
+| eh_ativa | DIM_EQUIPE |
+| eh_feriado | DIM_DATA |
+| eh_fim_de_semana | DIM_DATA |
+| eh_lider | DIM_VENDEDOR |
+| eh_periodo_fechado | FACT_METAS |
+| email | DIM_CLIENTE, DIM_VENDEDOR |
+| email_lider | DIM_EQUIPE |
+| email_pessoal | DIM_VENDEDOR |
+| equipe_id | DIM_EQUIPE (PK), DIM_VENDEDOR |
+| equipe_original_id | DIM_EQUIPE |
+| estado | DIM_CLIENTE, DIM_REGIAO |
+| estado_atuacao | DIM_VENDEDOR |
+| estado_sede | DIM_EQUIPE |
+| fornecedor_id | DIM_PRODUTO |
+| fuso_horario | DIM_REGIAO |
+| gap_meta | FACT_METAS |
+| gerente_id | DIM_VENDEDOR |
+| idh | DIM_REGIAO |
+| impacto_margem | FACT_DESCONTOS |
+| latitude | DIM_REGIAO |
+| lider_equipe_id | DIM_EQUIPE |
+| longitude | DIM_REGIAO |
+| marca | DIM_PRODUTO |
+| margem_antes_desconto | FACT_DESCONTOS |
+| margem_apos_desconto | FACT_DESCONTOS |
+| matricula | DIM_VENDEDOR |
+| max_valor_desconto_regra | DIM_DESCONTO |
+| mes | DIM_DATA |
+| meta_anual_equipe | DIM_EQUIPE |
+| meta_batida | FACT_METAS |
+| meta_id | FACT_METAS (PK) |
+| meta_mensal_base | DIM_VENDEDOR |
+| meta_mensal_equipe | DIM_EQUIPE |
+| meta_superada | FACT_METAS |
+| meta_trimestral_base | DIM_VENDEDOR |
+| meta_trimestral_equipe | DIM_EQUIPE |
+| metodo_desconto | DIM_DESCONTO |
+| min_valor_compra_regra | DIM_DESCONTO |
+| motivo_desligamento | DIM_VENDEDOR |
+| nivel_aplicacao | FACT_DESCONTOS |
+| nivel_senioridade | DIM_VENDEDOR |
+| nome_campanha | DIM_DESCONTO |
+| nome_cliente | DIM_CLIENTE |
+| nome_dia_semana | DIM_DATA |
+| nome_equipe | DIM_EQUIPE, DIM_VENDEDOR |
+| nome_estado | DIM_REGIAO |
+| nome_feriado | DIM_DATA |
+| nome_fornecedor | DIM_PRODUTO |
+| nome_gerente | DIM_VENDEDOR |
+| nome_lider | DIM_EQUIPE |
+| nome_mes | DIM_DATA |
+| nome_produto | DIM_PRODUTO |
+| nome_vendedor | DIM_VENDEDOR |
+| numero_pedido | FACT_VENDAS, FACT_DESCONTOS |
+| observacoes | DIM_EQUIPE, DIM_VENDEDOR, FACT_METAS |
+| pais | DIM_CLIENTE, DIM_REGIAO |
+| percentual_atingido | FACT_METAS |
+| percentual_comissao | FACT_VENDAS |
+| percentual_comissao_padrao | DIM_VENDEDOR |
+| percentual_meta_mes_anterior | DIM_EQUIPE, DIM_VENDEDOR |
+| peso_kg | DIM_PRODUTO |
+| pib_per_capita | DIM_REGIAO |
+| populacao_estimada | DIM_REGIAO |
+| porte_municipio | DIM_REGIAO |
+| preco_sugerido | DIM_PRODUTO |
+| preco_unitario_tabela | FACT_VENDAS |
+| produto_id | DIM_PRODUTO (PK), FACT_VENDAS, FACT_DESCONTOS |
+| produto_original_id | DIM_PRODUTO |
+| quantidade_devolvida | FACT_VENDAS |
+| quantidade_meta | FACT_METAS |
+| quantidade_realizada | FACT_METAS |
+| quantidade_vendida | FACT_VENDAS |
+| quartil_performance | FACT_METAS |
+| qtd_membros_atual | DIM_EQUIPE |
+| qtd_membros_ideal | DIM_EQUIPE |
+| qtd_meta_vendas_mes | DIM_EQUIPE |
+| ranking_mes_anterior | DIM_VENDEDOR |
+| ranking_periodo | FACT_METAS |
+| ranking_ultimo_mes | DIM_EQUIPE |
+| regiao_id | DIM_REGIAO (PK), FACT_VENDAS |
+| regiao_original_id | DIM_REGIAO |
+| regiao_pais | DIM_REGIAO |
+| regional | DIM_EQUIPE |
+| segmento | DIM_CLIENTE |
+| situacao | DIM_EQUIPE, DIM_VENDEDOR, DIM_DESCONTO |
+| subcategoria | DIM_PRODUTO |
+| telefone_celular | DIM_VENDEDOR |
+| telefone_comercial | DIM_VENDEDOR |
+| territorio_vendas | DIM_VENDEDOR |
+| ticket_medio_realizado | FACT_METAS |
+| tipo_cliente | DIM_CLIENTE |
+| tipo_comissao | DIM_VENDEDOR |
+| tipo_desconto | DIM_DESCONTO |
+| tipo_equipe | DIM_EQUIPE |
+| tipo_municipio | DIM_REGIAO |
+| tipo_periodo | FACT_METAS |
+| tipo_vendedor | DIM_VENDEDOR |
+| total_vendas_acumulado_ano | DIM_VENDEDOR |
+| total_vendas_mes_anterior | DIM_EQUIPE, DIM_VENDEDOR |
+| total_vendas_mes_atual | DIM_VENDEDOR |
+| teve_desconto | FACT_VENDAS |
+| trimestre | DIM_DATA |
+| valor_comissao | FACT_VENDAS |
+| valor_com_desconto | FACT_DESCONTOS |
+| valor_desconto | DIM_DESCONTO |
+| valor_desconto_aplicado | FACT_DESCONTOS |
+| valor_devolvido | FACT_VENDAS
