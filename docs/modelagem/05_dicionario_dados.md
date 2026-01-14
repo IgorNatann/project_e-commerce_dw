@@ -21,13 +21,15 @@ Cada campo está documentado com:
 
 | Elemento | Descrição |
 |----------|-----------|
-| **Nome** | Nome técnico do campo |
+| **Campo** | Nome técnico do campo |
 | **Tipo** | Tipo de dados SQL Server |
 | **Obrigatório** | NULL ou NOT NULL |
 | **Descrição** | O que o campo representa |
-| **Valores** | Valores válidos ou exemplo |
+| **Exemplo** | Valor válido ou exemplo |
 | **Regras** | Constraints e validações |
-| **Origem** | Sistema fonte (quando aplicável) |
+
+**Origem:** quando aplicável, indicada no rodapé de cada tabela.
+
 
 ### Navegação Rápida
 
@@ -82,36 +84,43 @@ Padrão de Nomes:
 ## DIM_DATA - Dimensão Temporal
 
 **Schema:** `dim.DIM_DATA`  
-**Registros:** ~3.650 (10 anos: 2020-2030)  
-**Crescimento:** Planejado (adição manual de anos futuros)
+**Registros:** ~2.192 (2020-2025)  
+**Crescimento:** Gerado por script; ampliar intervalo conforme necessário
 
 ### Campos
 
 | Campo | Tipo | Obr. | Descrição | Exemplo | Regras |
 |-------|------|------|-----------|---------|--------|
-| 🔑 **data_id** | INT | ✓ | PK - Formato YYYYMMDD | `20241231` | PRIMARY KEY, formato date integer |
-| 📝 **data_completa** | DATE | ✓ | Data no formato padrão | `2024-12-31` | UNIQUE |
-| 📝 **ano** | INT | ✓ | Ano (4 dígitos) | `2024` | `>= 2020 AND <= 2030` |
+| 🔑 **data_id** | INT | ✓ | PK surrogate (IDENTITY) | `1` | PRIMARY KEY |
+| 🗓️ **data_completa** | DATE | ✓ | Data completa | `2024-12-31` | UNIQUE |
+| 📝 **ano** | INT | ✓ | Ano (4 dígitos) | `2024` | `>= 2020` |
 | 📝 **trimestre** | INT | ✓ | Trimestre do ano | `4` | `BETWEEN 1 AND 4` |
-| 📝 **mes** | INT | ✓ | Mês (número) | `12` | `BETWEEN 1 AND 12` |
-| 📝 **nome_mes** | VARCHAR(20) | ✓ | Nome do mês por extenso | `"Dezembro"` | Lista fixa de 12 meses |
-| 📝 **dia_mes** | INT | ✓ | Dia do mês | `31` | `BETWEEN 1 AND 31` |
-| 📝 **dia_ano** | INT | ✓ | Dia do ano (ordinal) | `365` | `BETWEEN 1 AND 366` |
-| 📝 **dia_semana** | INT | ✓ | Dia da semana (1=Dom) | `7` | `BETWEEN 1 AND 7` |
-| 📝 **nome_dia_semana** | VARCHAR(20) | ✓ | Nome do dia por extenso | `"Sábado"` | Lista fixa de 7 dias |
-| 🏷️ **eh_fim_de_semana** | BIT | ✓ | 1=Sáb/Dom, 0=Útil | `1` | Calculado: dia_semana IN (1,7) |
-| 🏷️ **eh_feriado** | BIT | ✓ | 1=Feriado nacional | `1` | Lista de feriados brasileiros |
-| 📝 **nome_feriado** | VARCHAR(50) | ✗ | Nome do feriado | `"Natal"` | NULL se não é feriado |
+| 📝 **mes** | INT | ✓ | Mês (1-12) | `12` | `BETWEEN 1 AND 12` |
+| 📝 **dia** | INT | ✓ | Dia do mês | `31` | `BETWEEN 1 AND 31` |
+| 📝 **semana_do_ano** | INT | ✓ | Semana do ano | `52` | `BETWEEN 1 AND 53` |
+| 📝 **dia_da_semana** | INT | ✓ | Dia da semana (1=Dom) | `7` | `BETWEEN 1 AND 7` |
+| 📝 **nome_mes** | VARCHAR(20) | ✓ | Nome do mês | `Dezembro` | - |
+| 📝 **nome_mes_abrev** | VARCHAR(3) | ✓ | Abreviação do mês | `Dez` | - |
+| 📝 **nome_dia_semana** | VARCHAR(20) | ✓ | Nome do dia | `Sábado` | - |
+| 📝 **nome_dia_semana_abrev** | VARCHAR(3) | ✓ | Abreviação do dia | `Sáb` | - |
+| 🏷️ **eh_fim_de_semana** | BIT | ✓ | Flag fim de semana | `1` | 1=Sim, 0=Não |
+| 🏷️ **eh_feriado** | BIT | ✓ | Flag feriado nacional | `1` | 1=Sim, 0=Não |
+| 📝 **nome_feriado** | VARCHAR(50) | ✗ | Nome do feriado | `Natal` | NULL se não feriado |
+| 📝 **dia_do_ano** | INT | ✓ | Dia do ano (ordinal) | `365` | `BETWEEN 1 AND 366` |
+| 🏷️ **eh_ano_bissexto** | BIT | ✓ | Ano bissexto | `1` | 1=Sim, 0=Não |
+| 📝 **periodo_mes** | VARCHAR(7) | ✓ | Ano-Mês formatado | `2024-12` | `YYYY-MM` |
+| 📝 **periodo_trimestre** | VARCHAR(7) | ✓ | Ano-Trimestre formatado | `2024-Q4` | `YYYY-Qn` |
 
 **Hierarquia Temporal:**
 ```
-ano → trimestre → mes → dia_mes
-                      → dia_semana
+ano -> trimestre -> mes -> dia
+ano -> semana_do_ano
 ```
 
 **Origem:** Gerada pelo script (não vem de sistema fonte)
 
 ---
+
 
 ## DIM_CLIENTE - Dimensão Cliente
 
@@ -125,29 +134,51 @@ ano → trimestre → mes → dia_mes
 | Campo | Tipo | Obr. | Descrição | Exemplo | Regras |
 |-------|------|------|-----------|---------|--------|
 | 🔑 **cliente_id** | INT | ✓ | PK - Surrogate Key | `1` | PRIMARY KEY IDENTITY |
-| 🔗 **cliente_original_id** | INT | ✓ | Natural Key (sistema CRM) | `45123` | UNIQUE, origem: CRM |
-| 📝 **nome_cliente** | VARCHAR(200) | ✓ | Nome completo ou razão social | `"João Silva"` | `LEN >= 3` |
-| 📝 **email** | VARCHAR(255) | ✓ | Email principal | `"joao@email.com"` | UNIQUE, formato email |
-| 📝 **tipo_cliente** | VARCHAR(20) | ✓ | Pessoa Física ou Jurídica | `"PF"` | `IN ('PF', 'PJ')` |
-| 📝 **segmento** | VARCHAR(30) | ✗ | Classificação de valor | `"Ouro"` | `IN ('Bronze','Prata','Ouro','Platinum','Corporativo','Enterprise')` |
-| 📝 **pais** | VARCHAR(50) | ✓ | País de origem | `"Brasil"` | Default: 'Brasil' |
-| 📝 **estado** | CHAR(2) | ✗ | UF do cliente | `"SP"` | `LEN = 2`, códigos IBGE |
-| 📝 **cidade** | VARCHAR(100) | ✗ | Cidade do cliente | `"São Paulo"` | - |
-| 🗓️ **data_cadastro** | DATE | ✓ | Data de registro no sistema | `2024-01-15` | `<= GETDATE()` |
-| 🗓️ **data_ultima_compra** | DATE | ✗ | Última transação | `2024-12-10` | Atualizado por ETL |
-| 🏷️ **eh_ativo** | BIT | ✓ | Status do cliente | `1` | Default: 1, 0=Inativo |
+| 🔗 **cliente_original_id** | INT | ✓ | Natural Key do sistema de origem | `45123` | UNIQUE |
+| 📝 **nome_cliente** | VARCHAR(100) | ✓ | Nome completo ou razão social | `João Silva` | - |
+| 📝 **email** | VARCHAR(100) | ✗ | Email principal | `joao@email.com` | - |
+| 📝 **telefone** | VARCHAR(20) | ✗ | Telefone | `(11) 98765-4321` | - |
+| 📝 **cpf_cnpj** | VARCHAR(18) | ✗ | CPF ou CNPJ | `123.456.789-00` | - |
+| 🗓️ **data_nascimento** | DATE | ✗ | Data de nascimento | `1985-03-15` | - |
+| 📝 **genero** | CHAR(1) | ✗ | Gênero | `M` | `IN ('M','F','O')` |
+| 📝 **tipo_cliente** | VARCHAR(20) | ✓ | Novo, Recorrente, VIP ou Inativo | `Recorrente` | `IN ('Novo','Recorrente','VIP','Inativo')` |
+| 📝 **segmento** | VARCHAR(20) | ✓ | Pessoa Física ou Jurídica | `Pessoa Física` | `IN ('Pessoa Física','Pessoa Jurídica')` |
+| 📝 **score_credito** | INT | ✗ | Score de crédito | `850` | `>= 0` |
+| 📝 **categoria_valor** | VARCHAR(20) | ✗ | Categoria de valor | `Ouro` | `IN ('Bronze','Prata','Ouro','Platinum')` |
+| 📝 **endereco_completo** | VARCHAR(200) | ✗ | Logradouro | `Av. Paulista, 1000` | - |
+| 📝 **numero** | VARCHAR(10) | ✗ | Número | `1000` | - |
+| 📝 **complemento** | VARCHAR(50) | ✗ | Complemento | `Apto 12` | - |
+| 📝 **bairro** | VARCHAR(50) | ✗ | Bairro | `Bela Vista` | - |
+| 📝 **cidade** | VARCHAR(100) | ✓ | Cidade | `São Paulo` | - |
+| 📝 **estado** | CHAR(2) | ✓ | UF | `SP` | `LEN = 2` |
+| 📝 **pais** | VARCHAR(50) | ✓ | País | `Brasil` | Default: `Brasil` |
+| 📝 **cep** | VARCHAR(10) | ✗ | CEP | `01310-100` | - |
+| 🗓️ **data_primeiro_cadastro** | DATE | ✓ | Data do primeiro cadastro | `2020-01-15` | - |
+| 🗓️ **data_ultima_compra** | DATE | ✗ | Última compra | `2024-11-28` | - |
+| 🗓️ **data_ultima_atualizacao** | DATETIME | ✓ | Última atualização | `2024-12-15 10:00:00` | - |
+| 📊 **total_compras_historico** | INT | ✓ | Total de compras históricas | `145` | `>= 0` |
+| 📊 **valor_total_gasto_historico** | DECIMAL(12,2) | ✓ | Valor total gasto | `87500.00` | `>= 0` |
+| 📊 **ticket_medio_historico** | DECIMAL(10,2) | ✗ | Ticket médio | `603.45` | - |
+| 🏷️ **eh_ativo** | BIT | ✓ | Status do cliente | `1` | 1=Ativo, 0=Inativo |
+| 🏷️ **aceita_email_marketing** | BIT | ✓ | Opt-in de marketing | `1` | 1=Sim, 0=Não |
+| 🏷️ **eh_cliente_vip** | BIT | ✓ | Flag de cliente VIP | `1` | 1=Sim, 0=Não |
 
-**Origem:** Sistema CRM (Salesforce/Dynamics)
+**Origem:** Sistema transacional/CRM
 
-**Segmentação por Valor (Regra de Negócio):**
-- Bronze: < R$ 1.000 lifetime value
+**Tipo de Cliente (tipo_cliente):**
+- Novo: primeira compra
+- Recorrente: 2+ compras
+- VIP: alto valor
+- Inativo: sem compra recente
+
+**Categoria de Valor (categoria_valor):**
+- Bronze: até R$ 1.000
 - Prata: R$ 1.000 - R$ 10.000
 - Ouro: R$ 10.000 - R$ 50.000
-- Platinum: > R$ 50.000
-- Corporativo: PJ pequeno/médio porte
-- Enterprise: PJ grande porte
+- Platinum: acima de R$ 50.000
 
 ---
+
 
 ## DIM_PRODUTO - Dimensão Produto
 
@@ -161,33 +192,59 @@ ano → trimestre → mes → dia_mes
 | Campo | Tipo | Obr. | Descrição | Exemplo | Regras |
 |-------|------|------|-----------|---------|--------|
 | 🔑 **produto_id** | INT | ✓ | PK - Surrogate Key | `1` | PRIMARY KEY IDENTITY |
-| 🔗 **produto_original_id** | INT | ✓ | Natural Key (sistema ERP) | `78945` | UNIQUE, origem: ERP |
-| 📝 **codigo_sku** | VARCHAR(50) | ✓ | Stock Keeping Unit | `"DELL-INSP-15"` | UNIQUE |
-| 📝 **nome_produto** | VARCHAR(200) | ✓ | Nome descritivo completo | `"Notebook Dell Inspiron 15"` | - |
-| 📝 **categoria** | VARCHAR(50) | ✓ | Categoria principal (nível 1) | `"Eletrônicos"` | - |
-| 📝 **subcategoria** | VARCHAR(50) | ✗ | Subcategoria (nível 2) | `"Notebooks"` | - |
-| 📝 **marca** | VARCHAR(50) | ✗ | Marca do produto | `"Dell"` | - |
-| 🔗 **fornecedor_id** | INT | ✗ | ID do fornecedor | `123` | Origem: ERP |
-| 📝 **nome_fornecedor** | VARCHAR(100) | ✗ | Nome do fornecedor (desnorm.) | `"Dell Inc."` | Desnormalizado |
-| 📊 **peso_kg** | DECIMAL(10,2) | ✗ | Peso em quilogramas | `2.50` | `>= 0` |
-| 📝 **dimensoes** | VARCHAR(50) | ✗ | Dimensões físicas | `"35x25x2 cm"` | Formato livre |
-| 📊 **preco_sugerido** | DECIMAL(10,2) | ✗ | Preço de tabela atual | `3500.00` | `> 0` |
-| 📊 **custo_medio** | DECIMAL(10,2) | ✗ | Custo médio unitário | `2000.00` | `> 0` |
-| 🏷️ **eh_ativo** | BIT | ✓ | Produto ativo no catálogo | `1` | Default: 1 |
+| 🔗 **produto_original_id** | INT | ✓ | Natural Key do ERP | `78945` | UNIQUE |
+| 📝 **codigo_sku** | VARCHAR(50) | ✓ | Stock Keeping Unit | `DELL-NB-INS15-001` | UNIQUE |
+| 📝 **codigo_barras** | VARCHAR(20) | ✗ | EAN/UPC | `7891234567890` | - |
+| 📝 **nome_produto** | VARCHAR(150) | ✓ | Nome do produto | `Notebook Dell Inspiron 15` | - |
+| 📝 **descricao_curta** | VARCHAR(255) | ✗ | Descrição curta | `Notebook i5 8GB 256GB` | - |
+| 📝 **descricao_completa** | VARCHAR(MAX) | ✗ | Descrição completa | `Detalhes técnicos...` | - |
+| 📝 **categoria** | VARCHAR(50) | ✓ | Categoria principal | `Eletrônicos` | - |
+| 📝 **subcategoria** | VARCHAR(50) | ✓ | Subcategoria | `Notebooks` | - |
+| 📝 **linha_produto** | VARCHAR(50) | ✗ | Linha do produto | `Linha Inspiron` | - |
+| 📝 **marca** | VARCHAR(50) | ✓ | Marca | `Dell` | - |
+| 📝 **fabricante** | VARCHAR(100) | ✗ | Fabricante | `Dell Inc.` | - |
+| 🔗 **fornecedor_id** | INT | ✓ | ID do fornecedor | `101` | - |
+| 📝 **nome_fornecedor** | VARCHAR(100) | ✓ | Nome do fornecedor | `Tech Supply` | - |
+| 📝 **pais_origem** | VARCHAR(50) | ✗ | País de origem | `Estados Unidos` | - |
+| 📊 **peso_kg** | DECIMAL(8,3) | ✗ | Peso em kg | `2.150` | `>= 0` |
+| 📝 **altura_cm** | DECIMAL(6,2) | ✗ | Altura em cm | `2.50` | `>= 0` |
+| 📝 **largura_cm** | DECIMAL(6,2) | ✗ | Largura em cm | `35.80` | `>= 0` |
+| 📝 **profundidade_cm** | DECIMAL(6,2) | ✗ | Profundidade em cm | `24.00` | `>= 0` |
+| 📝 **cor_principal** | VARCHAR(30) | ✗ | Cor principal | `Preto` | - |
+| 📝 **material** | VARCHAR(50) | ✗ | Material | `Mesh/Borracha` | - |
+| 📊 **preco_custo** | DECIMAL(10,2) | ✓ | Custo de aquisição | `2400.00` | `>= 0` |
+| 📊 **preco_sugerido** | DECIMAL(10,2) | ✓ | Preço de tabela | `3499.00` | `>= 0` |
+| 📊 **margem_sugerida_percent** | DECIMAL(5,2) | ✗ | Margem sugerida (%) | `31.42` | `BETWEEN 0 AND 100` |
+| 🏷️ **eh_perecivel** | BIT | ✓ | Produto perecível | `0` | 1=Sim, 0=Não |
+| 🏷️ **eh_fragil** | BIT | ✓ | Produto frágil | `1` | 1=Sim, 0=Não |
+| 🏷️ **requer_refrigeracao** | BIT | ✓ | Precisa refrigerar | `0` | 1=Sim, 0=Não |
+| 📝 **idade_minima_venda** | INT | ✗ | Idade mínima | `18` | - |
+| 📊 **estoque_minimo** | INT | ✓ | Estoque mínimo | `5` | `>= 0` |
+| 📊 **estoque_maximo** | INT | ✓ | Estoque máximo | `100` | `>= estoque_minimo` |
+| 📝 **prazo_reposicao_dias** | INT | ✗ | Prazo de reposição | `15` | - |
+| 📝 **situacao** | VARCHAR(20) | ✓ | Status | `Ativo` | `IN ('Ativo','Inativo','Descontinuado')` |
+| 🗓️ **data_lancamento** | DATE | ✗ | Data de lançamento | `2023-06-15` | - |
+| 🗓️ **data_descontinuacao** | DATE | ✗ | Data de descontinuação | `2018-12-31` | - |
+| 🗓️ **data_cadastro** | DATETIME | ✓ | Data de cadastro | `2024-01-01 00:00:00` | - |
+| 🗓️ **data_ultima_atualizacao** | DATETIME | ✓ | Última atualização | `2024-12-15 09:00:00` | - |
+| 📝 **palavras_chave** | VARCHAR(200) | ✗ | Palavras-chave | `notebook, i5, 8gb` | - |
+| 📊 **avaliacao_media** | DECIMAL(2,1) | ✗ | Avaliação média | `4.5` | `BETWEEN 0 AND 5` |
+| 📊 **total_avaliacoes** | INT | ✓ | Total de avaliações | `127` | `>= 0` |
 
-**Hierarquia de Categorização:**
+**Hierarquia de Categorias:**
 ```
-categoria → subcategoria → marca → produto → SKU
+categoria -> subcategoria -> linha_produto -> produto -> SKU
 ```
 
 **Origem:** Sistema ERP (SAP/TOTVS)
 
 **Regra de Margem:**
 ```sql
-margem = (preco_sugerido - custo_medio) / preco_sugerido * 100
+margem_sugerida_percent = (preco_sugerido - preco_custo) / preco_sugerido * 100
 ```
 
 ---
+
 
 ## DIM_REGIAO - Dimensão Geográfica
 
